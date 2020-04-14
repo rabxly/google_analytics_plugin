@@ -68,6 +68,7 @@ class GoogleAnalyticsHook(BaseHook):
     def get_service_object(self, name):
         service = GoogleAnalyticsHook._services[name]
 
+        # TODO: Find out, what is the replacement for AccessTokenCredentials in the new version
         # if self.connection.password:
         #     credentials = AccessTokenCredentials(self.connection.password,
         #                                          'Airflow/1.0')
