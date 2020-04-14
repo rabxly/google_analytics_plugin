@@ -33,7 +33,7 @@ import time
 import os
 
 from airflow.hooks.base_hook import BaseHook
-from airflow import configuration as conf
+from airflow.configuration import conf
 from airflow.exceptions import AirflowConfigException
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaInMemoryUpload
