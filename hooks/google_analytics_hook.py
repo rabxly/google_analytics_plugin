@@ -34,10 +34,10 @@ import os
 
 from airflow.hooks.base_hook import BaseHook
 from airflow import configuration as conf
-from apiclient.discovery import build
-from apiclient.http import MediaInMemoryUpload
-from oauth2client.service_account import ServiceAccountCredentials
-from oauth2client.client import AccessTokenCredentials
+from airflow.exceptions import AirflowConfigException
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
+from google.oauth2.service_account import Credentials
 from collections import namedtuple
 
 
@@ -52,7 +52,10 @@ class GoogleAnalyticsHook(BaseHook):
                                 version='v3',
                                 scopes=['https://www.googleapis.com/auth/analytics'])
     }
-    _key_folder = os.path.join(conf.get('core', 'airflow_home'), 'keys')
+    try:
+        _key_folder = os.path.join(conf.get('core', 'airflow_home'), 'keys')
+    except AirflowConfigException:
+        _key_folder = os.path.join(os.getenv("AIRFLOW_HOME"), 'keys')
 
     def __init__(self, google_analytics_conn_id='google_analytics_default', key_file=None):
         self.google_analytics_conn_id = google_analytics_conn_id
@@ -65,16 +68,14 @@ class GoogleAnalyticsHook(BaseHook):
     def get_service_object(self, name):
         service = GoogleAnalyticsHook._services[name]
 
-        if self.connection.password:
-            credentials = AccessTokenCredentials(self.connection.password,
-                                                 'Airflow/1.0')
-        elif hasattr(self, 'client_secrets'):
-            credentials = ServiceAccountCredentials.from_json_keyfile_dict(self.client_secrets,
-                                                                           service.scopes)
+        # if self.connection.password:
+        #     credentials = AccessTokenCredentials(self.connection.password,
+        #                                          'Airflow/1.0')
+        if hasattr(self, 'client_secrets'):
+            credentials = Credentials.from_service_account_info(self.client_secrets)
 
         elif hasattr(self, 'file_location'):
-            credentials = ServiceAccountCredentials.from_json_keyfile_name(self.file_location,
-                                                                           service.scopes)
+            credentials = Credentials.from_service_account_file(self.file_location)
         else:
             raise ValueError('No valid credentials could be found')
 
